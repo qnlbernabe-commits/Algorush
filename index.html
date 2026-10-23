@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorush — Arcade Party Quiz &amp; Buzzer Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:ital,opsz,wght@0,6..12,500;0,6..12,700;0,6..12,800;0,6..12,900;1,6..12,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="Logo_only.png">
+</head>
+
+<body>
+
+    <!-- Dynamic Genre-Themed Arcade Background Showcase Layer -->
+    <div class="arcade-bg" aria-hidden="true">
+        <div class="arcade-bg__pattern"></div>
+        <!-- Populated dynamically with drifting genre vector stickers via #tpl-floating-sticker -->
+        <div id="theme-floating-stage" class="theme-floating-stage"></div>
+        <div class="arcade-bg__vignette"></div>
+    </div>
+
+    <!-- ==========================================
+         ACE ATTORNEY-STYLE DRAMATIC BUZZER CUT-IN
+         ========================================== -->
+    <div id="buzzer-cutin-overlay" class="cutin-overlay hidden" aria-hidden="true">
+        <div id="cutin-slash-banner" class="cutin-slash-banner">
+            <div class="cutin-speedlines"></div>
+            <div class="cutin-inner">
+                <div id="cutin-character-stage" class="cutin-character-stage"></div>
+                <div class="cutin-callout-box">
+                    <div class="cutin-speech-burst">
+                        <span id="cutin-shout-text" class="cutin-shout-text">HOLD IT!</span>
+                    </div>
+                    <div class="cutin-player-banner">
+                        <span id="cutin-player-name" class="cutin-player-name">PLAYER 1</span>
+                        <span id="cutin-player-key" class="cutin-player-key">KEY [A]</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full-screen Confetti Canvas for Victory Celebration -->
+    <canvas id="confetti-canvas" class="confetti-canvas hidden" aria-hidden="true"></canvas>
+
+    <div class="app-shell">
+
+        <!-- ==========================================
+             GLOBAL SOUND / MUTE FLOATING UTILITY BAR
+             ========================================== -->
+        <div class="utility-bar">
+            <div class="sticker-tag sticker-tag--tilt-left">
+                <span class="sticker-dot"></span>
+                <span id="active-world-pill">WORLD // TECH &amp; COMPUTER</span>
+            </div>
+            <button type="button" id="btn-sound-toggle" class="sound-toggle-btn" aria-pressed="false"
+                title="Toggle Game Audio">
+                <svg id="icon-sound-on" class="sound-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                </svg>
+                <svg id="icon-sound-off" class="sound-icon hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                    <line x1="23" y1="9" x2="17" y2="15"></line>
+                    <line x1="17" y1="9" x2="23" y2="15"></line>
+                </svg>
+                <span id="sound-toggle-label">SFX ON</span>
+            </button>
+        </div>
+
+        <!-- ==========================================
+             VIEW 1: MAIN PARTY LOBBY SCREEN
+             ========================================== -->
+        <section id="view-prep" class="screen-view lobby-view">
+
+            <!-- Hero Brand Header + Mascot Host -->
+            <header class="lobby-hero">
+                <div class="brand-stage">
+                    <span class="sticker-badge sticker-badge--top">SHARED KEYBOARD PARTY QUIZ</span>
+                    <div class="brand-logo">
+                        <img src="Logo_only.png" alt="A" class="brand-emblem-img">
+                        <h1 class="brand-title">LGORUSH</h1>
+                    </div>
+                    <p class="brand-tagline">Fast fingers. Cold nerves. One keyboard.</p>
+                </div>
+
+                <!-- Volt the Arcade Mascot Host Widget (Dresses up per Category!) -->
+                <div id="lobby-mascot-widget" class="mascot-widget" data-mood="idle">
+                    <div class="mascot-avatar-wrap">
+                        <svg class="volt-mascot-svg" viewBox="0 0 120 120" role="img"
+                            aria-label="Volt the Algorush Mascot">
+                            <path class="volt-antenna" d="M64 4L48 24H60L54 38L74 18H61L64 4Z" fill="#FFD447"
+                                stroke="#100D12" stroke-width="3" stroke-linejoin="round" />
+                            <polygon class="volt-ear volt-ear--left" points="16,54 6,46 10,68 18,66" fill="#FFD447"
+                                stroke="#100D12" stroke-width="3" stroke-linejoin="round" />
+                            <polygon class="volt-ear volt-ear--right" points="104,54 114,46 110,68 102,66"
+                                fill="#FFD447" stroke="#100D12" stroke-width="3" stroke-linejoin="round" />
+                            <rect x="18" y="32" width="84" height="68" rx="18" fill="#4B1737" stroke="#100D12"
+                                stroke-width="4" />
+                            <rect x="22" y="36" width="76" height="56" rx="14" fill="#FF4D4D" stroke="#100D12"
+                                stroke-width="3" />
+                            <rect x="28" y="42" width="64" height="44" rx="10" fill="#100D12" />
+                            <path class="volt-brow volt-brow--left" d="M36 52L48 54" stroke="#FFD447" stroke-width="3.5"
+                                stroke-linecap="round" />
+                            <path class="volt-brow volt-brow--right" d="M84 52L72 54" stroke="#FFD447"
+                                stroke-width="3.5" stroke-linecap="round" />
+                            <g class="volt-eyes">
+                                <circle class="volt-eye volt-eye--left" cx="43" cy="61" r="5.5" fill="#FFD447" />
+                                <circle class="volt-eye volt-eye--right" cx="77" cy="61" r="5.5" fill="#FFD447" />
+                            </g>
+                            <circle cx="34" cy="70" r="3" fill="#FF4D4D" opacity="0.85" />
+                            <circle cx="86" cy="70" r="3" fill="#FF4D4D" opacity="0.85" />
+                            <path class="volt-mouth" d="M48 72Q60 80 72 72" fill="none" stroke="#66E3A4"
+                                stroke-width="3.5" stroke-linecap="round" />
+                            <circle cx="36" cy="94" r="2" fill="#FFD447" />
+                            <circle cx="84" cy="94" r="2" fill="#FFD447" />
+                            <!-- Dynamic Category Hat / Costume Prop Slot -->
+                            <g id="lobby-volt-prop" class="volt-prop-slot"></g>
+                        </svg>
+                    </div>
+                    <div class="mascot-speech-bubble">
+                        <span id="lobby-mascot-hat-tag" class="mascot-name-tag">VOLT // CYBER HOST</span>
+                        <p id="lobby-mascot-text" class="mascot-speech-text">Pick a category to transform the stage, or
+                            tap your key to test your cut-in!</p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main 2-Column Party Menu Deck -->
+            <div class="lobby-deck-grid">
+
+                <!-- LEFT COLUMN: Category Deck, Showcase & Round Length -->
+                <div class="game-panel game-panel--categories">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-kicker">STEP 01 // TRIVIA DECK</span>
+                            <h2 class="section-title">Choose your category</h2>
+                        </div>
+                        <div class="round-selector-wrap">
+                            <span class="muted-label">Rounds</span>
+                            <div id="round-count-group" class="pill-group" role="group" aria-label="Question Count">
+                                <button type="button" class="pill-btn" data-rounds="5">5</button>
+                                <button type="button" class="pill-btn is-selected" data-rounds="10">10</button>
+                                <button type="button" class="pill-btn" data-rounds="15">15</button>
+                                <button type="button" class="pill-btn" data-rounds="20">20</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="category-grid" class="category-grid" role="radiogroup" aria-label="Question Categories">
+                        <!-- Cloned from #tpl-category-card -->
+                    </div>
+
+                    <!-- Live Category Showcase Strip -->
+                    <div id="active-deck-showcase" class="deck-showcase-card">
+                        <div id="showcase-emblem-box" class="deck-showcase-emblem" aria-hidden="true"></div>
+                        <div class="deck-showcase-info">
+                            <div class="deck-showcase-title-row">
+                                <span id="showcase-deck-kicker" class="deck-showcase-kicker">ACTIVE STAGE</span>
+                                <h3 id="showcase-deck-title" class="deck-showcase-title">Tech &amp; Computer</h3>
+                            </div>
+                            <p id="showcase-deck-desc" class="deck-showcase-desc">Binary brains at the ready! Watch out
+                                for syntax traps.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Multiplayer Party Roster & Keybinds -->
+                <div class="game-panel game-panel--players">
+                    <div class="panel-header">
+                        <div>
+                            <span class="panel-kicker">STEP 02 // BUZZER CHECK-IN</span>
+                            <h2 class="section-title">
+                                Who's playing?
+                                <span class="lobby-test-pill">Tap your key for Cut-In! ⚡</span>
+                            </h2>
+                            <p class="section-subtitle">Click a keycap to rebind your buzzer hand</p>
+                        </div>
+                        <div class="player-count-wrap">
+                            <span class="muted-label">Players</span>
+                            <div id="player-count-group" class="pill-group" role="group" aria-label="Player Count">
+                                <button type="button" class="pill-btn" data-players="2">2</button>
+                                <button type="button" class="pill-btn" data-players="3">3</button>
+                                <button type="button" class="pill-btn is-selected" data-players="4">4</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="player-setup-grid" class="player-setup-grid">
+                        <!-- Cloned from #tpl-player-setup -->
+                    </div>
+
+                    <!-- Lobby Control Dock -->
+                    <footer class="prep-footer">
+                        <div class="footer-left">
+                            <button type="button" id="btn-quit-game" class="btn btn-outline">RESET</button>
+                            <a href="admin.html" class="btn-text-link">Question Bank →</a>
+                        </div>
+                        <div class="footer-right">
+                            <div class="match-ticket">
+                                <span class="ticket-label">MATCH TICKET</span>
+                                <span id="prep-summary-text" class="summary-text">Tech &amp; Computer · 4 players · 10
+                                    rounds</span>
+                            </div>
+                            <button type="button" id="btn-start-game" class="btn btn-primary btn-play-hero">
+                                <span class="btn-play-label">PLAY</span>
+                                <svg class="btn-play-bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M13 2L4 14h7l-2 8 11-12h-7l2-8z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </footer>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ==========================================
+             VIEW 2: ACTIVE GAMEPLAY SCREEN
+             ========================================== -->
+        <section id="view-game" class="screen-view gameplay-view hidden">
+
+            <!-- Region 1: Topbar, Round Progress & Live Mascot Reaction -->
+            <header class="game-topbar">
+                <div class="topbar-left">
+                    <img src="Logo.png" alt="Algorush" class="topbar-logo-img">
+                    <div class="topbar-meta">
+                        <span id="game-category-label" class="topbar-category">Tech &amp; Computer</span>
+                        <div class="round-progress-wrap">
+                            <span id="game-round-label" class="round-counter">ROUND 01 / 10</span>
+                            <div class="round-progress-track" aria-hidden="true">
+                                <div id="round-progress-fill" class="round-progress-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Gameplay Mascot Reaction Strip (Also wears the Category Costume!) -->
+                <div id="game-mascot-strip" class="game-mascot-strip" data-mood="excited">
+                    <div class="mascot-mini-badge">
+                        <svg class="volt-mascot-svg volt-mascot-svg--mini" viewBox="0 0 120 120" aria-hidden="true">
+                            <path class="volt-antenna" d="M64 4L48 24H60L54 38L74 18H61L64 4Z" fill="#FFD447"
+                                stroke="#100D12" stroke-width="3" />
+                            <rect x="18" y="32" width="84" height="68" rx="18" fill="#4B1737" stroke="#100D12"
+                                stroke-width="4" />
+                            <rect x="22" y="36" width="76" height="56" rx="14" fill="#FF4D4D" stroke="#100D12"
+                                stroke-width="3" />
+                            <rect x="28" y="42" width="64" height="44" rx="10" fill="#100D12" />
+                            <path class="volt-brow volt-brow--left" d="M36 52L48 54" stroke="#FFD447" stroke-width="4"
+                                stroke-linecap="round" />
+                            <path class="volt-brow volt-brow--right" d="M84 52L72 54" stroke="#FFD447" stroke-width="4"
+                                stroke-linecap="round" />
+                            <circle class="volt-eye volt-eye--left" cx="43" cy="61" r="5.5" fill="#FFD447" />
+                            <circle class="volt-eye volt-eye--right" cx="77" cy="61" r="5.5" fill="#FFD447" />
+                            <path class="volt-mouth" d="M48 72Q60 80 72 72" fill="none" stroke="#66E3A4"
+                                stroke-width="4" stroke-linecap="round" />
+                            <g id="game-volt-prop" class="volt-prop-slot"></g>
+                        </svg>
+                    </div>
+                    <span id="game-mascot-callout" class="game-mascot-callout">LOCK IN!</span>
+                </div>
+            </header>
+
+            <!-- Region 2: Urgency Bar, Point Stake & Circular Ring Timer -->
+            <div class="game-status-bar">
+                <div class="status-banner-left">
+                    <span id="phase-pill-tag" class="phase-pill">HANDS LOCKED</span>
+                    <p id="buzzer-instruction" class="status-prompt">Read the clue! Hands unlock in 5s...</p>
+                </div>
+
+                <div class="timer-cluster">
+                    <div class="stake-badge">
+                        <span class="stake-badge__label">STAKE</span>
+                        <span id="attempt-points-badge" class="points-tier-badge">1st Try · +3 PTS</span>
+                    </div>
+
+                    <div id="timer-pill-box" class="timer-ring-widget" data-urgency="normal">
+                        <svg class="timer-ring-svg" viewBox="0 0 56 56" aria-hidden="true">
+                            <circle class="timer-ring-track" cx="28" cy="28" r="23"></circle>
+                            <circle id="timer-ring-progress" class="timer-ring-progress" cx="28" cy="28" r="23">
+                            </circle>
+                        </svg>
+                        <span id="game-timer-display" class="timer-digits">00:05</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Region 3 & 4: Main Question Stage, Synchronized Countdown & Answer Input -->
+            <div id="question-stage-card" class="question-stage-card">
+                <div class="question-stage-top">
+                    <span id="question-type-tag" class="question-tag">TRIVIA CLUE</span>
+                    <div id="stage-countdown-badge" class="stage-countdown-badge">5</div>
+                </div>
+
+                <div id="question-content-box" class="question-content-box">
+                    <p id="question-text-clue" class="question-clue-text"></p>
+                    <div id="question-media-slot" class="question-media-slot hidden"></div>
+                </div>
+
+                <span id="question-hint-tag" class="question-hint-label">Wait for the countdown to hit GO!</span>
+
+                <form id="answer-form" class="answer-form hidden" autocomplete="off">
+                    <div class="answer-form-header">
+                        <span class="answering-indicator-dot"></span>
+                        <label id="answer-prompt-label" for="answer-input" class="answer-label">Player 1 is
+                            answering:</label>
+                    </div>
+                    <div class="answer-input-row">
+                        <input type="text" id="answer-input" class="answer-input"
+                            placeholder="Type your answer and press Enter..." required>
+                        <button type="submit" id="btn-submit-answer" class="btn btn-primary btn-submit-answer">
+                            <span>LOCK ANSWER</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Feedback Banner -->
+            <div id="feedback-banner" class="feedback-banner hidden" role="status" aria-live="polite">
+                <div class="feedback-left">
+                    <div id="feedback-icon" class="feedback-icon">✓</div>
+                    <div>
+                        <h3 id="feedback-title" class="feedback-title">CLEAN HIT!</h3>
+                        <p id="feedback-message" class="feedback-subtitle">Player 2 answered "Algorithm".</p>
+                    </div>
+                </div>
+                <div class="feedback-right">
+                    <span id="feedback-points" class="feedback-points">+3 PTS</span>
+                    <span id="feedback-next-note" class="feedback-subnote">Next round starting soon...</span>
+                </div>
+            </div>
+
+            <!-- Region 5: Active Player Scoreboard & Buzzer Cards -->
+            <div id="game-players-grid" class="game-players-grid">
+                <!-- Cloned from #tpl-player-game-card -->
+            </div>
+
+            <!-- Region 6: Supporting Gameplay Controls -->
+            <footer class="game-footer">
+                <button type="button" id="btn-back-menu" class="btn btn-outline btn-sm">← LOBBY MENU</button>
+                <span class="footer-rule-hint">5s read lock · First buzzer triggers cut-in · Wrong guess chains
+                    you</span>
+            </footer>
+        </section>
+
+
+        <!-- ==========================================
+             VIEW 3: RESULTS & TROPHY-GRAB CUTSCENE
+             ========================================== -->
+        <section id="view-leaderboard" class="screen-view results-view hidden">
+            <header class="game-topbar">
+                <div class="topbar-left">
+                    <img src="Logo.png" alt="Algorush" class="topbar-logo-img">
+                    <span id="leaderboard-subtitle" class="topbar-category">Tech &amp; Computer · Match Complete</span>
+                </div>
+            </header>
+
+            <!-- Champion Spotlight Stage with Animated Avatar Grabbing Trophy -->
+            <div id="champion-stage-card" class="champion-stage-card anim-winner-reveal">
+                <div class="champion-mascot-row">
+                    <span id="results-kicker-badge" class="sticker-badge">ABSOLUTE LEGEND.</span>
+                </div>
+
+                <div id="champion-cutscene-stage" class="champion-cutscene-stage" aria-hidden="true"></div>
+
+                <h2 id="winner-banner-text" class="winner-title">PLAYER 2 WINS!</h2>
+                <p id="winner-score-callout" class="winner-score-callout">CHAMPION SCORE: 0 PTS</p>
+            </div>
+
+            <!-- Final Standings List -->
+            <div class="leaderboard-card">
+                <div class="leaderboard-card-header">
+                    <span>FINAL STANDINGS</span>
+                    <span>SCORE</span>
+                </div>
+                <div id="leaderboard-list" class="leaderboard-list">
+                    <!-- Cloned from #tpl-leaderboard-row -->
+                </div>
+            </div>
+
+            <!-- Replay & Return Controls -->
+            <footer class="leaderboard-footer">
+                <button type="button" id="btn-results-menu" class="btn btn-outline">← BACK TO LOBBY</button>
+                <button type="button" id="btn-play-again" class="btn btn-primary btn-play-hero">
+                    <span>PLAY AGAIN</span>
+                    <svg class="btn-play-bolt" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M13 2L4 14h7l-2 8 11-12h-7l2-8z" />
+                    </svg>
+                </button>
+            </footer>
+        </section>
+
+    </div>
+
+
+    <!-- ==========================================
+         REUSABLE HTML TEMPLATES (Zero Inline CSS)
+         ========================================== -->
+
+    <!-- 1. Category Card Template -->
+    <template id="tpl-category-card">
+        <button type="button" class="category-card" role="radio" aria-checked="false">
+            <span class="category-icon" aria-hidden="true"></span>
+            <span class="category-name"></span>
+            <span class="category-check" aria-hidden="true">✓</span>
+        </button>
+    </template>
+
+    <!-- 2. Player Setup & Keybind Card Template -->
+    <template id="tpl-player-setup">
+        <div class="player-setup-card">
+            <div class="hand-raise-badge" aria-hidden="true">
+                <span class="hand-emoji">✋</span>
+                <span class="hand-label">READY!</span>
+            </div>
+            <div class="player-avatar-badge" aria-hidden="true"></div>
+            <div class="player-setup-fields">
+                <span class="player-slot-tag">PLAYER 1</span>
+                <input type="text" class="player-name-input" maxlength="14" aria-label="Player Name">
+            </div>
+            <div class="keybind-col">
+                <span class="keybind-caption">BUZZ KEY</span>
+                <button type="button" class="keybind-btn"
+                    title="Click then press any alphanumeric key to rebind"></button>
+            </div>
+        </div>
+    </template>
+
+    <!-- 3. Gameplay Player Status Card Template -->
+    <template id="tpl-player-game-card">
+        <div class="player-game-card">
+            <div class="hand-raise-badge" aria-hidden="true">
+                <span class="hand-emoji">✋</span>
+                <span class="hand-label">FIRST BUZZER!</span>
+            </div>
+
+            <div class="leader-crown-badge hidden" aria-hidden="true">
+                <span>👑 LEADER</span>
+            </div>
+
+            <div class="chain-lock-overlay" aria-hidden="true">
+                <div class="chain-strip chain-strip--left">⛓️ ⛓️ ⛓️ ⛓️</div>
+                <div class="chain-strip chain-strip--right">⛓️ ⛓️ ⛓️ ⛓️</div>
+                <div class="padlock-badge">🔒 OUT</div>
+            </div>
+
+            <div class="player-avatar-badge player-avatar-badge--sm" aria-hidden="true"></div>
+            <div class="player-key-badge"></div>
+            <div class="player-info-col">
+                <span class="player-game-name"></span>
+                <span class="player-buzz-status">Ready</span>
+            </div>
+            <div class="player-score-col">
+                <span class="player-score-val">0</span>
+                <span class="player-score-unit">PTS</span>
+            </div>
+        </div>
+    </template>
+
+    <!-- 4. 4 Pics 1 Word Grid Template -->
+    <template id="tpl-4pics-grid">
+        <div class="four-pics-grid">
+            <img class="pic-tile" alt="Puzzle clue 1">
+            <img class="pic-tile" alt="Puzzle clue 2">
+            <img class="pic-tile" alt="Puzzle clue 3">
+            <img class="pic-tile" alt="Puzzle clue 4">
+        </div>
+    </template>
+
+    <!-- 5. Leaderboard Row Template -->
+    <template id="tpl-leaderboard-row">
+        <div class="leaderboard-row">
+            <div class="leaderboard-rank-group">
+                <span class="leaderboard-rank">01</span>
+                <div class="player-avatar-badge player-avatar-badge--sm" aria-hidden="true"></div>
+                <div class="leaderboard-name-stack">
+                    <span class="leaderboard-player-name">Player 1</span>
+                    <span class="leaderboard-standing-tag">CONTENDER</span>
+                </div>
+            </div>
+            <div class="leaderboard-score-group">
+                <span class="leaderboard-points">0</span>
+                <span class="leaderboard-pts-label">PTS</span>
+            </div>
+        </div>
+    </template>
+
+    <!-- 6. Flying Points Projectile Template -->
+    <template id="tpl-flying-points">
+        <div class="flying-points-orb">+3 PTS</div>
+    </template>
+
+    <!-- 7. Floating Background Genre Sticker Template -->
+    <template id="tpl-floating-sticker">
+        <div class="theme-floater"></div>
+    </template>
+
+    <!-- 8. Category Click Burst Particle Template -->
+    <template id="tpl-burst-particle">
+        <div class="category-burst-particle" aria-hidden="true"></div>
+    </template>
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

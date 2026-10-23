@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algo Rush — Question Bank Admin</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Press+Start+2P&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/png" href="Logo_only.png">
+</head>
+
+<body>
+
+    <div class="app-shell">
+        <section class="screen-view">
+
+            <!-- Top Navigation Bar -->
+            <header class="game-topbar">
+                <div class="topbar-left">
+                    <img src="Logo.png" alt="Algo Rush" class="topbar-logo-img">
+                    <span class="topbar-category">Question Bank Manager</span>
+                </div>
+                <div class="topbar-right">
+                    <a href="index.html" class="btn-text-link">← BACK TO GAME</a>
+                </div>
+            </header>
+
+            <!-- Add Question Form Panel -->
+            <div class="panel-card">
+                <div class="panel-header">
+                    <div>
+                        <h2 class="section-title">Add New Question</h2>
+                        <p class="section-subtitle">Questions are checked for duplicates before saving to Firestore</p>
+                    </div>
+                    <div class="round-selector-wrap">
+                        <span class="muted-label">Format:</span>
+                        <div id="admin-type-group" class="pill-group">
+                            <button type="button" class="pill-btn is-selected" data-type="text">Trivia Clue</button>
+                            <button type="button" class="pill-btn" data-type="4pics">4 Pics 1 Word</button>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="admin-question-form" class="admin-form" autocomplete="off">
+                    <div class="admin-form-grid">
+                        <div class="form-field">
+                            <label for="admin-category" class="muted-label">Category</label>
+                            <select id="admin-category" class="admin-select" required>
+                                <option value="Tech & Computer">Tech &amp; Computer</option>
+                                <option value="Science">Science</option>
+                                <option value="Animals">Animals</option>
+                                <option value="Movies & TV">Movies &amp; TV</option>
+                                <option value="Sports">Sports</option>
+                                <option value="Food & Drinks">Food &amp; Drinks</option>
+                                <option value="Geography">Geography</option>
+                                <option value="General Knowledge">General Knowledge</option>
+                            </select>
+                        </div>
+
+                        <div class="form-field">
+                            <label for="admin-answer" class="muted-label">Correct Answer</label>
+                            <input type="text" id="admin-answer" class="answer-input" placeholder="e.g., Algorithm"
+                                required>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="admin-clue" class="muted-label">Question Clue / Prompt</label>
+                        <input type="text" id="admin-clue" class="answer-input"
+                            placeholder="Type the trivia clue or prompt..." required>
+                    </div>
+
+                    <!-- 4 Pics Image URLs (Hidden unless '4 Pics 1 Word' is selected) -->
+                    <div id="admin-4pics-fields" class="admin-form-grid hidden">
+                        <div class="form-field">
+                            <label for="img-url-1" class="muted-label">Image 1 URL</label>
+                            <input type="url" id="img-url-1" class="answer-input" placeholder="https://...">
+                        </div>
+                        <div class="form-field">
+                            <label for="img-url-2" class="muted-label">Image 2 URL</label>
+                            <input type="url" id="img-url-2" class="answer-input" placeholder="https://...">
+                        </div>
+                        <div class="form-field">
+                            <label for="img-url-3" class="muted-label">Image 3 URL</label>
+                            <input type="url" id="img-url-3" class="answer-input" placeholder="https://...">
+                        </div>
+                        <div class="form-field">
+                            <label for="img-url-4" class="muted-label">Image 4 URL</label>
+                            <input type="url" id="img-url-4" class="answer-input" placeholder="https://...">
+                        </div>
+                    </div>
+
+                    <!-- Status Banner -->
+                    <div id="admin-status-banner" class="feedback-banner hidden">
+                        <div class="feedback-left">
+                            <div id="admin-status-icon" class="feedback-icon">✓</div>
+                            <div>
+                                <h3 id="admin-status-title" class="feedback-title">SAVED!</h3>
+                                <p id="admin-status-msg" class="feedback-subtitle">Question added to Firestore.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="prep-footer">
+                        <span class="muted-label">Tip: Select a category above to filter the existing list below.</span>
+                        <button type="submit" id="btn-save-question" class="btn btn-primary">SAVE QUESTION</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Existing Questions Browser -->
+            <div class="leaderboard-card">
+                <div class="leaderboard-card-header">
+                    <span id="bank-list-title">EXISTING QUESTIONS (Tech &amp; Computer)</span>
+                    <span id="bank-count-badge">0 QUESTIONS</span>
+                </div>
+                <div id="admin-question-list" class="leaderboard-list">
+                    <!-- Cloned from #tpl-admin-question-row -->
+                </div>
+            </div>
+
+        </section>
+    </div>
+
+    <!-- Template for Question Bank Row -->
+    <template id="tpl-admin-question-row">
+        <div class="leaderboard-row">
+            <div class="admin-q-info">
+                <div class="admin-q-meta">
+                    <span class="points-tier-badge admin-q-type">TEXT</span>
+                    <strong class="admin-q-answer">Answer</strong>
+                </div>
+                <p class="admin-q-clue">Clue text goes here...</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-delete-q">DELETE</button>
+        </div>
+    </template>
+
+    <script type="module" src="admin.js"></script>
+</body>
+
+</html>
