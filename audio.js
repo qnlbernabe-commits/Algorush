@@ -4,22 +4,43 @@ class SoundManager {
     constructor() {
         this.ctx = null;
         this.isMuted = false;
+        this.masterGain = null;
+        this.activeVoices = new Set();
     }
 
     initContext() {
         if (!this.ctx) {
             const AudioCtx = window.AudioContext || window.webkitAudioContext;
             if (AudioCtx) {
-                this.ctx = new AudioCtx();
+                try {
+                    this.ctx = new AudioCtx();
+                    this.masterGain = this.ctx.createGain();
+                    this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 1, this.ctx.currentTime);
+                    this.masterGain.connect(this.ctx.destination);
+                } catch {
+                    this.ctx = null;
+                    this.masterGain = null;
+                }
             }
         }
         if (this.ctx && this.ctx.state === "suspended") {
-            this.ctx.resume();
+            this.ctx.resume().catch(() => {});
         }
     }
 
     toggleMute() {
         this.isMuted = !this.isMuted;
+        if (this.ctx && this.masterGain) {
+            this.masterGain.gain.cancelScheduledValues(this.ctx.currentTime);
+            this.masterGain.gain.setValueAtTime(this.isMuted ? 0 : 1, this.ctx.currentTime);
+        }
+        if (this.isMuted) {
+            // Stop delayed voices too: unmuting should not resurrect an old cue.
+            this.activeVoices.forEach((osc) => {
+                try { osc.stop(); } catch { /* The voice may already have ended. */ }
+            });
+            this.activeVoices.clear();
+        }
         return this.isMuted;
     }
 
@@ -45,7 +66,13 @@ class SoundManager {
         gain.gain.exponentialRampToValueAtTime(0.001, stopTime);
 
         osc.connect(gain);
-        gain.connect(this.ctx.destination);
+        gain.connect(this.masterGain || this.ctx.destination);
+        this.activeVoices.add(osc);
+        osc.onended = () => {
+            this.activeVoices.delete(osc);
+            osc.disconnect();
+            gain.disconnect();
+        };
 
         osc.start(startTime);
         osc.stop(stopTime);
@@ -162,6 +189,35 @@ class SoundManager {
                 delay: note.delay,
                 volume: 0.14
             });
+        });
+    }
+
+    // Spotlight Pick: dramatic rising sweep + stab
+    playSpotlight() {
+        this.playTone({ freq: 196, endFreq: 784, type: "sawtooth", duration: 0.32, volume: 0.13 });
+        this.playTone({ freq: 523.25, type: "square", duration: 0.12, delay: 0.3, volume: 0.12 });
+        this.playTone({ freq: 659.25, type: "square", duration: 0.12, delay: 0.4, volume: 0.12 });
+        this.playTone({ freq: 1046.5, type: "triangle", duration: 0.3, delay: 0.5, volume: 0.15 });
+    }
+
+    // Item Found
+    playItemGain() {
+        this.playTone({ freq: 783.99, type: "triangle", duration: 0.08, volume: 0.13 });
+        this.playTone({ freq: 1174.66, type: "triangle", duration: 0.08, delay: 0.08, volume: 0.13 });
+        this.playTone({ freq: 1567.98, type: "square", duration: 0.18, delay: 0.16, volume: 0.12 });
+    }
+
+    // Item Used (generic power-up)
+    playItemUse() {
+        this.playTone({ freq: 330, endFreq: 990, type: "square", duration: 0.16, volume: 0.13 });
+        this.playTone({ freq: 1318.51, type: "triangle", duration: 0.16, delay: 0.14, volume: 0.13 });
+    }
+
+    // Shield Item (raised, and when it absorbs a hit)
+    playShield() {
+        this.playTone({ freq: 392, endFreq: 523.25, type: "triangle", duration: 0.12, volume: 0.14 });
+        [523.25, 783.99, 1046.5].forEach((freq, i) => {
+            this.playTone({ freq, type: "triangle", duration: 0.14, delay: 0.1 + i * 0.07, volume: 0.14 });
         });
     }
 

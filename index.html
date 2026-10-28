@@ -45,6 +45,21 @@
         </div>
     </div>
 
+    <!-- Chaos mode: explicit handoff, then an untimed item inspection. -->
+    <div id="item-reveal-overlay" class="item-reveal-overlay hidden" role="dialog" aria-modal="true"
+        aria-labelledby="item-reveal-title" aria-describedby="item-reveal-hint">
+        <div class="item-reveal-card">
+            <span class="panel-kicker">CHAOS // ITEM CHECK</span>
+            <h2 id="item-reveal-title" class="section-title">YOUR ITEMS</h2>
+            <p id="item-reveal-hint" class="item-reveal-hint">Pass the keyboard to the named player. Everyone else, look away until they are done.</p>
+            <div id="item-reveal-list" class="item-reveal-list"></div>
+            <button type="button" id="btn-item-reveal-continue" class="btn btn-primary">PLAYER READY</button>
+        </div>
+    </div>
+
+    <!-- Pop-up when a player finds an item -->
+    <div id="item-toast" class="item-toast hidden" role="status" aria-live="polite"></div>
+
     <!-- Full-screen Confetti Canvas for Victory Celebration -->
     <canvas id="confetti-canvas" class="confetti-canvas hidden" aria-hidden="true"></canvas>
 
@@ -74,6 +89,13 @@
                 </svg>
                 <span id="sound-toggle-label">SFX ON</span>
             </button>
+        </div>
+
+        <div id="match-status" class="match-status hidden" role="status" aria-live="polite" aria-atomic="true"></div>
+        <div id="match-load-actions" class="match-load-actions hidden" role="group" aria-label="Match loading options">
+            <button type="button" id="btn-retry-load" class="btn btn-outline btn-sm">RETRY CONNECTION</button>
+            <button type="button" id="btn-practice-mode" class="btn btn-outline btn-sm">PLAY LOCAL PRACTICE</button>
+            <button type="button" id="btn-short-match" class="btn btn-primary btn-sm hidden">PLAY AVAILABLE QUESTIONS</button>
         </div>
 
         <!-- ==========================================
@@ -133,6 +155,33 @@
                     </div>
                 </div>
             </header>
+
+            <div class="mode-deck">
+                <div class="mode-deck__heading">
+                    <span class="panel-kicker">PICK YOUR PACE</span>
+                    <h2 class="section-title">How wild is this party?</h2>
+                </div>
+                <div id="mode-group" class="mode-options" role="group" aria-label="Game mode">
+                    <button type="button" class="mode-option is-selected" data-mode="normal" aria-pressed="true">
+                        <span class="mode-option__icon" aria-hidden="true">⚡</span>
+                        <span class="mode-option__copy"><strong>NORMAL</strong><span>Pure trivia. Fast buzzers. Fair chances.</span></span>
+                    </button>
+                    <button type="button" class="mode-option" data-mode="chaos" aria-pressed="false">
+                        <span class="mode-option__icon" aria-hidden="true">🌀</span>
+                        <span class="mode-option__copy"><strong>CHAOS</strong><span>Power-ups, surprise rounds &amp; big swings.</span></span>
+                    </button>
+                </div>
+                <p id="mode-description" class="mode-description">Normal: everyone races for the buzzer. No power-ups or random events.</p>
+                <details class="rules-help">
+                    <summary>First time playing? Here are the rules</summary>
+                    <div class="rules-help__body">
+                        <p><strong>One keyboard, 2–4 players.</strong> Pick a unique buzzer key for each player. Read during the lock, then release and press your key at GO. The first buzzer gets a full answer timer.</p>
+                        <p><strong>Normal:</strong> a correct answer earns 300 points, then 200 / 100 / 100 on later attempts. A wrong answer or typing timeout locks that player out of the question; the others can steal.</p>
+                        <p><strong>Chaos:</strong> start with two items and watch for Spotlight, Double Points and Lucky Drop rounds. Events are announced before the round. Spotlight gives one player 1.5× rewards and risks, then open buzzing returns.</p>
+                        <p><strong>Items:</strong> Shield protects a Spotlight loss; 2x boosts a correct answer; Block freezes an opponent for the next round; Skip moves to the next question. Use the on-screen shortcuts while answering. You can hold up to four items.</p>
+                    </div>
+                </details>
+            </div>
 
             <!-- Main 2-Column Party Menu Deck -->
             <div class="lobby-deck-grid">
@@ -234,7 +283,10 @@
                 <div class="topbar-left">
                     <img src="Logo.png" alt="Algorush" class="topbar-logo-img">
                     <div class="topbar-meta">
-                        <span id="game-category-label" class="topbar-category">Tech &amp; Computer</span>
+                        <div class="topbar-label-row">
+                            <span id="game-category-label" class="topbar-category">Tech &amp; Computer</span>
+                            <span id="game-mode-label" class="game-mode-label">NORMAL</span>
+                        </div>
                         <div class="round-progress-wrap">
                             <span id="game-round-label" class="round-counter">ROUND 01 / 10</span>
                             <div class="round-progress-track" aria-hidden="true">
@@ -298,6 +350,8 @@
             <div id="question-stage-card" class="question-stage-card">
                 <div class="question-stage-top">
                     <span id="question-type-tag" class="question-tag">TRIVIA CLUE</span>
+                    <span id="spotlight-tag" class="spotlight-tag hidden"></span>
+                    <span id="chaos-event-tag" class="chaos-event-tag hidden"></span>
                     <div id="stage-countdown-badge" class="stage-countdown-badge">5</div>
                 </div>
 
@@ -322,6 +376,9 @@
                         </button>
                     </div>
                 </form>
+
+                <!-- Item panel: only shown to the player who is currently answering -->
+                <div id="item-panel" class="item-panel hidden" aria-live="polite"></div>
             </div>
 
             <!-- Feedback Banner -->
@@ -347,8 +404,7 @@
             <!-- Region 6: Supporting Gameplay Controls -->
             <footer class="game-footer">
                 <button type="button" id="btn-back-menu" class="btn btn-outline btn-sm">← LOBBY MENU</button>
-                <span class="footer-rule-hint">5s read lock · First buzzer triggers cut-in · Wrong guess chains
-                    you</span>
+                <span id="game-rule-hint" class="footer-rule-hint">Normal · Read, wait for GO, then buzz · Full timer to answer · Other players can steal</span>
             </footer>
         </section>
 
@@ -364,13 +420,13 @@
                 </div>
             </header>
 
-            <!-- Champion Spotlight Stage with Animated Avatar Grabbing Trophy -->
+            <!-- Every tied champion receives their own animated figure. -->
             <div id="champion-stage-card" class="champion-stage-card anim-winner-reveal">
                 <div class="champion-mascot-row">
                     <span id="results-kicker-badge" class="sticker-badge">ABSOLUTE LEGEND.</span>
                 </div>
 
-                <div id="champion-cutscene-stage" class="champion-cutscene-stage" aria-hidden="true"></div>
+                <div id="champion-cutscene-stage" class="champion-cutscene-stage"></div>
 
                 <h2 id="winner-banner-text" class="winner-title">PLAYER 2 WINS!</h2>
                 <p id="winner-score-callout" class="winner-score-callout">CHAMPION SCORE: 0 PTS</p>
@@ -458,6 +514,7 @@
             <div class="player-info-col">
                 <span class="player-game-name"></span>
                 <span class="player-buzz-status">Ready</span>
+                <div class="player-items-row" aria-label="Items"></div>
             </div>
             <div class="player-score-col">
                 <span class="player-score-val">0</span>
