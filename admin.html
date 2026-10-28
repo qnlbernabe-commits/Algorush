@@ -34,13 +34,13 @@
                 <div class="panel-header">
                     <div>
                         <h2 class="section-title">Add New Question</h2>
-                        <p class="section-subtitle">Questions are checked for duplicates before saving to Firestore</p>
+                        <p class="section-subtitle">Validate your clues, list accepted answers, and check question health before play.</p>
                     </div>
                     <div class="round-selector-wrap">
                         <span class="muted-label">Format:</span>
                         <div id="admin-type-group" class="pill-group">
-                            <button type="button" class="pill-btn is-selected" data-type="text">Trivia Clue</button>
-                            <button type="button" class="pill-btn" data-type="4pics">4 Pics 1 Word</button>
+                            <button type="button" class="pill-btn is-selected" data-type="text" aria-pressed="true">Trivia Clue</button>
+                            <button type="button" class="pill-btn" data-type="4pics" aria-pressed="false">4 Pics 1 Word</button>
                         </div>
                     </div>
                 </div>
@@ -64,14 +64,21 @@
                         <div class="form-field">
                             <label for="admin-answer" class="muted-label">Correct Answer</label>
                             <input type="text" id="admin-answer" class="answer-input" placeholder="e.g., Algorithm"
-                                required>
+                                required maxlength="120">
                         </div>
                     </div>
 
                     <div class="form-field">
                         <label for="admin-clue" class="muted-label">Question Clue / Prompt</label>
                         <input type="text" id="admin-clue" class="answer-input"
-                            placeholder="Type the trivia clue or prompt..." required>
+                            placeholder="Type the trivia clue or prompt..." required maxlength="600">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="admin-aliases" class="muted-label">Accepted alternatives (optional)</label>
+                        <input type="text" id="admin-aliases" class="answer-input" maxlength="1560"
+                            placeholder="e.g., Pacific | Pacific Ocean" aria-describedby="admin-aliases-help">
+                        <p id="admin-aliases-help" class="section-subtitle">Separate alternatives with |. Case and extra spaces are handled automatically; punctuation is preserved.</p>
                     </div>
 
                     <!-- 4 Pics Image URLs (Hidden unless '4 Pics 1 Word' is selected) -->
@@ -95,7 +102,8 @@
                     </div>
 
                     <!-- Status Banner -->
-                    <div id="admin-status-banner" class="feedback-banner hidden">
+                    <div id="admin-image-preview" class="hidden" aria-live="polite"></div>
+                    <div id="admin-status-banner" class="feedback-banner hidden" role="status" aria-live="polite" aria-atomic="true">
                         <div class="feedback-left">
                             <div id="admin-status-icon" class="feedback-icon">✓</div>
                             <div>
@@ -116,9 +124,10 @@
             <div class="leaderboard-card">
                 <div class="leaderboard-card-header">
                     <span id="bank-list-title">EXISTING QUESTIONS (Tech &amp; Computer)</span>
-                    <span id="bank-count-badge">0 QUESTIONS</span>
+                    <span id="bank-count-badge">NOT LOADED</span>
+                    <button type="button" id="btn-bank-retry" class="btn btn-outline btn-sm">RETRY LIST</button>
                 </div>
-                <div id="admin-question-list" class="leaderboard-list">
+                <div id="admin-question-list" class="leaderboard-list" aria-label="Question bank" aria-busy="false">
                     <!-- Cloned from #tpl-admin-question-row -->
                 </div>
             </div>
