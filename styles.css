@@ -1685,6 +1685,11 @@ body {
     border-color: var(--accent-yellow);
 }
 
+.answer-input:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
 /* ==========================================
    GAMEPLAY PLAYER SCOREBOARD & BUZZER CARDS
    ========================================== */
@@ -3430,4 +3435,241 @@ select:focus-visible {
         animation: none !important;
         transform: none;
     }
+}
+
+/* Picture clues share the stage with the answer area, rather than making a
+   tall stack. Browser zoom and the lobby/admin layouts remain untouched. */
+.gameplay-view.is-picture-round {
+    gap: 12px;
+    scroll-margin-top: 12px;
+}
+
+.is-picture-round .game-topbar {
+    padding: 8px 14px;
+    gap: 8px;
+}
+
+.is-picture-round .game-topbar .topbar-logo-img {
+    height: 32px;
+}
+
+.is-picture-round .game-mascot-callout {
+    max-width: 340px;
+    font-size: 0.78rem;
+}
+
+.is-picture-round .status-prompt {
+    font-size: 0.9rem;
+}
+
+.is-picture-round .question-stage-card {
+    min-height: 0;
+    padding: 14px 20px;
+    gap: 10px;
+}
+
+.is-picture-round .question-stage-top {
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+}
+
+.picture-timer-tag {
+    font: 0.72rem var(--font-display);
+    color: var(--accent-yellow);
+    background: var(--bg-primary);
+    border: 1.5px solid var(--accent-yellow);
+    border-radius: 8px;
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+
+.picture-timer-tag[data-urgency="danger"] {
+    color: var(--accent-red);
+    border-color: var(--accent-red);
+}
+
+.is-picture-round .spotlight-tag,
+.is-picture-round .chaos-event-tag {
+    order: 1;
+}
+
+.is-picture-round .stage-countdown-badge {
+    display: none;
+}
+
+.is-picture-round .stage-countdown-badge {
+    width: 36px;
+    height: 36px;
+    font-size: 1.1rem;
+    border-width: 2px;
+    box-shadow: 0 3px 0 #9E7800;
+}
+
+.is-picture-round .stage-countdown-badge.is-go {
+    width: auto;
+    padding: 0 14px;
+    font-size: 0.9rem;
+}
+
+.is-picture-round .four-pics-grid {
+    --picture-size: clamp(96px, 17vh, 136px);
+    grid-template-columns: repeat(2, var(--picture-size));
+    gap: 8px;
+}
+
+.is-picture-round .pic-tile {
+    width: var(--picture-size);
+    height: var(--picture-size);
+    object-fit: contain;
+    background: #100D12;
+    border-width: 2px;
+    border-radius: 8px;
+}
+
+.is-picture-round .question-clue-text {
+    font-size: clamp(1rem, 1.7vw, 1.3rem);
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.is-picture-round .answer-form {
+    padding: 10px 12px;
+    gap: 6px;
+    max-width: 100%;
+    min-width: 0;
+}
+
+.is-picture-round .answer-input {
+    min-width: 0;
+    padding: 9px 10px;
+}
+
+.is-picture-round .item-panel {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+}
+
+.is-picture-round .item-panel__row {
+    gap: 6px;
+}
+
+.is-picture-round .item-btn {
+    padding: 6px 8px;
+    min-width: 0;
+    flex: 1 1 160px;
+}
+
+.is-picture-round .game-players-grid {
+    padding-top: 8px;
+    gap: 10px;
+}
+
+.is-picture-round .player-game-card {
+    padding: 10px 8px;
+    gap: 7px;
+    min-width: 0;
+}
+
+@media (min-width: 760px) {
+    .is-picture-round .question-stage-card {
+        display: grid;
+        grid-template-columns: minmax(224px, 0.9fr) minmax(0, 1.3fr);
+        grid-template-areas:
+            "tags tags"
+            "pictures clue"
+            "pictures hint"
+            "pictures answer"
+            "pictures items";
+        align-items: center;
+        column-gap: 24px;
+    }
+
+    .is-picture-round .question-stage-top { grid-area: tags; }
+    .is-picture-round .question-content-box { display: contents; }
+    .is-picture-round #question-media-slot { grid-area: pictures; justify-self: center; }
+    .is-picture-round .question-clue-text { grid-area: clue; }
+    .is-picture-round .question-hint-label { grid-area: hint; }
+    .is-picture-round .answer-form { grid-area: answer; }
+    .is-picture-round .item-panel { grid-area: items; }
+    .is-picture-round .game-players-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+@media (max-width: 759px) {
+    .is-picture-round .question-stage-card {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .is-picture-round .four-pics-grid {
+        --picture-size: clamp(88px, 14vh, 112px);
+    }
+
+    .is-picture-round.is-answering .four-pics-grid {
+        --picture-size: clamp(88px, 11vh, 100px);
+    }
+
+    .is-picture-round .answer-input-row {
+        flex-direction: row;
+        gap: 6px;
+    }
+
+    .is-picture-round .answer-input {
+        font-size: 0.9rem;
+        padding: 8px;
+    }
+
+    .is-picture-round .btn-submit-answer {
+        padding: 8px 10px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .is-picture-round .item-panel__row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .is-picture-round .item-img--btn {
+        width: 24px;
+        height: 24px;
+    }
+
+    .is-picture-round .item-btn {
+        padding: 6px;
+        gap: 6px;
+    }
+
+    .is-picture-round .item-btn__name {
+        font-size: 0.65rem;
+    }
+
+    .is-picture-round .question-content-box {
+        gap: 10px;
+    }
+
+    .is-picture-round .game-players-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .is-picture-round .player-avatar-badge--sm {
+        width: 24px;
+        height: 24px;
+        flex-basis: 24px;
+    }
+
+    .is-picture-round .player-key-badge {
+        width: 22px;
+        min-width: 22px;
+        height: 28px;
+        font-size: 0.8rem;
+    }
+
+    .is-picture-round .player-game-name { font-size: 0.75rem; }
+    .is-picture-round .player-buzz-status { font-size: 0.58rem; }
+    .is-picture-round .player-score-val { font-size: 1.15rem; }
+    .is-picture-round .item-count-tag { font-size: 0.52rem; }
+    .is-picture-round .player-game-card { gap: 5px; padding: 8px 6px; }
+    .is-picture-round .player-score-col { padding: 4px 6px; }
 }

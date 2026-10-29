@@ -300,6 +300,7 @@ const state = {
     effectFrames: new Set(),
     scoreAnimations: new Set(),
     heldKeys: new Set(),
+    answerSuppressedKeys: new Set(),
     selectedCategory: "Tech & Computer",
     roundCount: 10,
     playerCount: 4,
@@ -480,14 +481,14 @@ function buildAceCutInSVG(playerId) {
     `;
 }
 
-function triggerAceBuzzerCutIn(player, customShout = null) {
+function triggerAceBuzzerCutIn(player, customShout = null, onComplete = null) {
     const overlay = document.getElementById("buzzer-cutin-overlay");
     const stage = document.getElementById("cutin-character-stage");
     const shoutEl = document.getElementById("cutin-shout-text");
     const nameEl = document.getElementById("cutin-player-name");
     const keyEl = document.getElementById("cutin-player-key");
 
-    if (!overlay || !stage) return;
+    if (!overlay || !stage) { onComplete?.(); return; }
 
     const spec = CHARACTER_SPECS[(player.id - 1) % CHARACTER_SPECS.length];
     const randomShout = customShout || spec.shouts[Math.floor(Math.random() * spec.shouts.length)];
@@ -504,6 +505,8 @@ function triggerAceBuzzerCutIn(player, customShout = null) {
 
     state.cutinTimeout = scheduleEffect(() => {
         overlay.classList.add("hidden");
+        state.cutinTimeout = null;
+        onComplete?.();
     }, 1050);
 }
 
@@ -517,8 +520,17 @@ function init() {
     updatePrepSummary();
     bindPrepEvents();
     window.addEventListener("keydown", handleGlobalKeydown);
-    window.addEventListener("keyup", (e) => state.heldKeys.delete(e.key.toUpperCase()));
+    window.addEventListener("keyup", (e) => {
+        state.heldKeys.delete(e.key.toUpperCase());
+        state.answerSuppressedKeys.delete(e.key.toUpperCase());
+    });
     window.addEventListener("blur", () => state.heldKeys.clear());
+    window.addEventListener("resize", positionGameplay);
+    window.visualViewport?.addEventListener("resize", positionGameplay);
+    document.fonts?.ready.then(positionGameplay);
+    document.getElementById("answer-input").addEventListener("beforeinput", (e) => {
+        if (state.phase !== "ANSWERING") e.preventDefault();
+    });
     window.matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", (e) => {
         if (e.matches) stopConfetti();
     });
@@ -801,6 +813,8 @@ async function loadRound() {
         return;
     }
     state.phase = "QUESTION_LOADING";
+    views.game.classList.toggle("is-picture-round", currentQ.type === "4pics");
+    views.game.classList.remove("is-answering");
     state.attemptIndex = 0;
     state.activeBuzzerPlayerId = null;
     state.blockPickerOpen = false;
@@ -860,6 +874,7 @@ async function loadRound() {
     setGameMascot(spotlightPlayer ? "nervous" : "excited", roundNumber === totalRounds ? "FINAL ROUND — MAKE IT COUNT!" : eventMessage);
     renderGamePlayerCards();
     startHandLockCountdown();
+    positionGameplay();
 }
 
 function getCountdownInstruction(seconds) {
@@ -884,6 +899,8 @@ function startHandLockCountdown(seconds = HAND_LOCK_SECONDS) {
         : "Wait for GO, then make a fresh press. Holding your key does not count.";
     updateAttemptBadge();
     renderGamePlayerCards();
+    views.game.classList.remove("is-answering");
+    positionGameplay();
     if (spotlight) { sfx.playSpotlight(); triggerAceBuzzerCutIn(spotlight, "YOU'RE PICKED!"); }
     startClock(seconds, "read", (remaining) => {
         badge.textContent = remaining;
@@ -929,6 +946,15 @@ function startAnswerClock() {
 
 function handleGlobalKeydown(e) {
     const key = e.key.toUpperCase();
+    if (state.phase === "BUZZ_REVEAL") {
+        state.heldKeys.add(key);
+        if (!e.ctrlKey && !e.metaKey) e.preventDefault();
+        return;
+    }
+    if (state.phase === "ANSWERING" && state.answerSuppressedKeys.has(key)) {
+        e.preventDefault();
+        return;
+    }
     if (e.repeat || state.heldKeys.has(key)) return;
     state.heldKeys.add(key);
     if (state.phase === "ITEM_REVEAL" || state.loading || e.ctrlKey || e.metaKey) return;
@@ -990,25 +1016,50 @@ function handleGlobalKeydown(e) {
 
 function triggerPlayerBuzzIn(player, { spotlight = false } = {}) {
     if (state.phase !== "BUZZ_OPEN" || player.lockedOut || player.blockedThisRound) return;
-    state.phase = "ANSWERING";
+    const session = state.sessionToken;
+    const round = state.roundToken;
+    stopClock();
+    state.phase = "BUZZ_REVEAL";
     state.activeBuzzerPlayerId = player.id;
     state.blockPickerOpen = false;
+    state.answerSuppressedKeys.clear();
+    state.timerValue = ANSWER_TIME_SECONDS;
+    state.timerMax = ANSWER_TIME_SECONDS;
+    updateTimerDisplay();
     sfx.playRaiseHand();
-    triggerAceBuzzerCutIn(player, spotlight ? "SPOTLIGHT!" : null);
     setGameMascot("excited", `${player.name.toUpperCase()} ON THE MIC!`);
     document.getElementById("stage-countdown-badge").classList.add("hidden");
-    document.getElementById("phase-pill-tag").textContent = spotlight ? "SPOTLIGHT ANSWER" : "ANSWERING";
-    document.getElementById("buzzer-instruction").textContent = spotlight
-        ? `${player.name} has 10 seconds. This Spotlight is exclusive; everyone returns next round.`
-        : `${player.name} has 10 seconds. Other players: get ready to steal after a miss.`;
+    document.getElementById("phase-pill-tag").textContent = "BUZZER LOCKED";
+    document.getElementById("buzzer-instruction").textContent = `${player.name} claimed the mic. Release your keys; typing opens after the cut-in.`;
     const input = document.getElementById("answer-input");
     input.value = "";
+    input.disabled = true;
+    document.getElementById("btn-submit-answer").disabled = true;
     document.getElementById("answer-prompt-label").textContent = `${player.name} [${player.key}]: type your answer${spotlight ? " (1.5x stakes)" : ""}.`;
-    document.getElementById("answer-form").classList.remove("hidden");
-    renderGamePlayerCards(); updateAttemptBadge(); renderItemPanel(player);
-    startAnswerClock();
-    input.focus();
-    notify(`${player.name} claimed the mic. A fresh 10 seconds to answer${isChaos() ? "; Alt+1 Shield, Alt+2 2x, Alt+3 Block, Alt+4 Skip" : ""}.`);
+    document.getElementById("answer-form").classList.add("hidden");
+    hideItemPanel();
+    renderGamePlayerCards(); updateAttemptBadge();
+    notify(`${player.name} claimed the mic. Wait for the cut-in to finish and release your buzzer keys. The answer clock has not started.`);
+    triggerAceBuzzerCutIn(player, spotlight ? "SPOTLIGHT!" : null, () => {
+        if (session !== state.sessionToken || round !== state.roundToken || state.phase !== "BUZZ_REVEAL") return;
+        // Keys held across the cut-in stay suppressed until their real keyup.
+        state.answerSuppressedKeys = new Set(state.heldKeys);
+        state.phase = "ANSWERING";
+        input.value = "";
+        input.disabled = false;
+        document.getElementById("btn-submit-answer").disabled = false;
+        document.getElementById("answer-form").classList.remove("hidden");
+        views.game.classList.add("is-answering");
+        document.getElementById("phase-pill-tag").textContent = spotlight ? "SPOTLIGHT ANSWER" : "ANSWERING";
+        document.getElementById("buzzer-instruction").textContent = spotlight
+            ? `${player.name}: answer now. This Spotlight is exclusive.`
+            : `${player.name}: answer now. Other players can steal after a miss.`;
+        renderGamePlayerCards(); renderItemPanel(player);
+        startAnswerClock();
+        input.focus({ preventScroll: true });
+        positionGameplay();
+        notify(`${player.name}, type now! A full 10 seconds starts now${isChaos() ? "; Alt+1 Shield, Alt+2 2x, Alt+3 Block, Alt+4 Skip" : ""}.`);
+    });
 }
 
 function handleAnswerSubmit(e) {
@@ -1255,10 +1306,12 @@ function renderItemPanel(player) {
         if (itemId === "multiplier" && player.multiplierArmed) disabled = true;
         if (itemId === "shield" && (player.shieldArmed || state.spotlightPlayerId !== player.id)) disabled = true;
         if (itemId === "block" && (getBlockTargets(player).length === 0 || state.currentRoundIndex >= state.questions.length - 1)) disabled = true;
-        const reason = itemId === "shield" && state.spotlightPlayerId !== player.id ? "Save for Spotlight — no penalty this round"
-            : itemId === "block" && state.currentRoundIndex >= state.questions.length - 1 ? "Unavailable — this is the final question"
+        const compact = views.game.classList.contains("is-picture-round");
+        const description = compact ? { shield: "Blocks a Spotlight penalty", multiplier: "Double this answer's reward", block: "Block an opponent next round", skip: "Skip with no penalty" }[itemId] : def.desc;
+        const reason = itemId === "shield" && state.spotlightPlayerId !== player.id ? "Save for Spotlight — no loss at risk"
+            : itemId === "block" && state.currentRoundIndex >= state.questions.length - 1 ? "Unavailable on the final question"
             : disabled && (itemId === "shield" || itemId === "multiplier") ? "Already armed for this answer"
-            : disabled ? "No eligible targets" : def.desc;
+            : disabled ? "No eligible targets" : description;
 
         row.appendChild(makeItemButton({
             itemId,
@@ -1584,7 +1637,7 @@ function renderGamePlayerCards(holdScoreForValue = null, holdScorePlayerId = nul
 
         if (state.activeBuzzerPlayerId === player.id) {
             card.classList.add("is-first-buzzer");
-            statusText.textContent = "ANSWERING!";
+            statusText.textContent = state.phase === "BUZZ_REVEAL" ? "MIC CLAIMED · WAIT" : "ANSWERING!";
         } else if (player.lockedOut) {
             card.classList.add("is-locked");
             if (player.justChained) {
@@ -1622,6 +1675,7 @@ function renderGamePlayerCards(holdScoreForValue = null, holdScorePlayerId = nul
 
 function showFeedbackBanner(isSuccess, title, message, pointsLabel, subnote) {
     state.phase = "FEEDBACK";
+    views.game.classList.remove("is-answering");
     stopClock();
     notify(`${title} ${message} ${pointsLabel}. ${subnote}`, isSuccess ? "success" : "warning");
     hideItemPanel();
@@ -1667,6 +1721,14 @@ function updateTimerDisplay() {
     const clamped = Math.max(0, state.timerValue);
     const padded = String(clamped).padStart(2, "0");
     document.getElementById("game-timer-display").textContent = `00:${padded}`;
+    const pictureTimer = document.getElementById("picture-timer-tag");
+    if (pictureTimer) {
+        pictureTimer.classList.toggle("hidden", !views.game.classList.contains("is-picture-round"));
+        pictureTimer.textContent = state.phase === "BUZZ_REVEAL" ? "WAIT FOR CUT-IN"
+            : state.phase === "FEEDBACK" ? "ROUND OVER"
+            : `${state.phase === "ANSWERING" ? "ANSWER" : state.phase === "BUZZ_OPEN" ? "BUZZ" : "READ"} · 00:${padded}`;
+        pictureTimer.dataset.urgency = ["ANSWERING", "BUZZ_OPEN"].includes(state.phase) && clamped <= 3 ? "danger" : "normal";
+    }
 
     const ringEl = document.getElementById("timer-ring-progress");
     const widget = document.getElementById("timer-pill-box");
@@ -1835,6 +1897,11 @@ function stopConfetti() {
 
 function clearAllTimers() {
     stopClock();
+    state.answerSuppressedKeys.clear();
+    const input = document.getElementById("answer-input");
+    input.disabled = true;
+    input.value = "";
+    document.getElementById("btn-submit-answer").disabled = true;
     if (state.roundTransitionTimeout) clearTimeout(state.roundTransitionTimeout);
     state.roundTransitionTimeout = null;
     for (const id of state.effectTimeouts) clearTimeout(id);
@@ -1872,6 +1939,29 @@ function switchView(targetKey) {
     Object.entries(views).forEach(([key, el]) => {
         el.classList.toggle("hidden", key !== targetKey);
     });
+}
+
+// Fit picture rounds in the visual viewport without changing browser zoom.
+// Only position at phase/viewport changes, never while a player is typing.
+function positionGameplay() {
+    if (views.game.classList.contains("hidden") || !views.game.classList.contains("is-picture-round")) return;
+    if (!["HAND_COUNTDOWN", "BUZZ_OPEN", "BUZZ_REVEAL", "ANSWERING"].includes(state.phase)) return;
+    const viewport = window.visualViewport;
+    const height = viewport?.height || window.innerHeight;
+    const pageTop = window.scrollY;
+    const offset = viewport?.offsetTop || 0;
+    const game = views.game.getBoundingClientRect();
+    const stage = document.getElementById("question-stage-card").getBoundingClientRect();
+    const players = document.getElementById("game-players-grid").getBoundingClientRect();
+    let top = game.top;
+    if (players.bottom - game.top > height - 24) top = stage.top;
+    if (state.phase === "ANSWERING" && height < 480) {
+        // A phone's software keyboard leaves too little room for the whole board.
+        const answer = document.getElementById("answer-form").getBoundingClientRect();
+        if (answer.bottom > offset + height - 12 || answer.top < offset + 12) top = answer.top;
+        else return;
+    }
+    window.scrollTo({ top: Math.max(0, pageTop + top - offset - 12), behavior: "instant" });
 }
 
 

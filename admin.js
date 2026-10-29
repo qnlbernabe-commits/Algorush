@@ -1,9 +1,11 @@
-import { fetchQuestionsByCategory, addQuestionToFirestore, deleteQuestionFromFirestore } from "./firebase-config.js";
+import { fetchQuestionsByCategory, fetchQuestionBankForExport, addQuestionToFirestore, deleteQuestionFromFirestore } from "./firebase-config.js";
 import { validateQuestion } from "./questions.js";
+import { buildQuestionBankExport } from "./question-export.js";
 
 let selectedType = "text";
 let listRequest = 0;
 let savePending = false;
+let exportPending = false;
 const pendingDeletes = new Set();
 const categorySelect = document.getElementById("admin-category");
 const form = document.getElementById("admin-question-form");
@@ -33,7 +35,39 @@ function initAdmin() {
     form.addEventListener("submit", handleAddQuestion);
     fourPicsFields.querySelectorAll("input").forEach(input => input.addEventListener("change", updateImagePreview));
     document.getElementById("btn-bank-retry").addEventListener("click", loadCategoryQuestions);
+    document.getElementById("btn-export-questions").addEventListener("click", exportQuestionBank);
     loadCategoryQuestions();
+}
+
+async function exportQuestionBank() {
+    if (exportPending) return;
+    exportPending = true;
+    const button = document.getElementById("btn-export-questions");
+    const status = document.getElementById("bank-export-status");
+    button.disabled = true;
+    button.textContent = "EXPORTING…";
+    status.textContent = "Reading a snapshot of every category. Your saved questions are not being changed.";
+    let url;
+    try {
+        const rows = await fetchQuestionBankForExport();
+        const bank = buildQuestionBankExport(rows);
+        const filename = `algorush-question-bank-${bank.exportedAt.replace(/[:.]/g, "-")}.json`;
+        const blob = new Blob([JSON.stringify(bank, null, 2) + "\n"], { type: "application/json;charset=utf-8" });
+        url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        try { link.click(); } finally { link.remove(); }
+        status.textContent = `Export ready: ${rows.length} question record${rows.length === 1 ? "" : "s"} from all categories. Open the downloaded JSON with the Java validator using the steps in java-tools/README.md.${rows.length === 0 ? " The bank is empty; the validator will report that." : ""}`;
+    } catch (error) {
+        status.textContent = `Export failed: ${error.message || "The snapshot could not be downloaded."} You can retry Export Questions. Adding questions and playing the game do not require the Java tool.`;
+    } finally {
+        if (url) setTimeout(() => URL.revokeObjectURL(url), 1000);
+        button.disabled = false;
+        button.textContent = "EXPORT QUESTIONS";
+        exportPending = false;
+    }
 }
 
 function setSavePending(pending) {
