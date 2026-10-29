@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "source": "Intentionally flawed demonstration data",
+  "questions": [
+    {"id":"first","category":"Tech & Computer","type":"text","clue":"A step-by-step procedure.","answer":"Algorithm"},
+    {"id":"duplicate","category":"Tech & Computer","type":"text","clue":"A different clue with the same canonical answer.","answer":"  ALGORITHM  "},
+    {"id":"blank","category":"Science","type":"text","clue":"This answer is blank.","answer":"   "},
+    {"id":"pictures","category":"Animals","type":"4pics","clue":"A picture puzzle missing one of its four clues.","answer":"Cat","images":["https://example.com/1.png","https://example.com/2.png","https://example.com/3.png"]},
+    {"id":"alias-warning","category":"Geography","type":"text","clue":"The capital city of Japan.","answer":"Tokyo","acceptedAnswers":["Tokyo",7]},
+    {"id":"category","category":"Unsupported category","type":"text","clue":"This category is not available in the game.","answer":"Test"}
+  ]
+}

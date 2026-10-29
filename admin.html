@@ -126,7 +126,11 @@
                     <span id="bank-list-title">EXISTING QUESTIONS (Tech &amp; Computer)</span>
                     <span id="bank-count-badge">NOT LOADED</span>
                     <button type="button" id="btn-bank-retry" class="btn btn-outline btn-sm">RETRY LIST</button>
+                    <button type="button" id="btn-export-questions" class="btn btn-outline btn-sm"
+                        aria-describedby="bank-export-help">EXPORT QUESTIONS</button>
                 </div>
+                <p id="bank-export-help" class="section-subtitle">Download all categories for the optional Java question-bank checker. Exporting does not edit saved questions.</p>
+                <p id="bank-export-status" class="section-subtitle" role="status" aria-live="polite" aria-atomic="true"></p>
                 <div id="admin-question-list" class="leaderboard-list" aria-label="Question bank" aria-busy="false">
                     <!-- Cloned from #tpl-admin-question-row -->
                 </div>

@@ -92,6 +92,18 @@ export async function fetchQuestionsByCategory(category, count = 10) {
     } catch (error) { throw bankError(error, "load questions"); }
 }
 
+/** A read-only full snapshot. Raw invalid records are retained for the Java audit. */
+export async function fetchQuestionBankForExport() {
+    try {
+        const sdk = await getSdk();
+        const snapshot = await withTimeout(sdk.getDocs(sdk.collection(db, "questions")),
+            "Export took too long. Your question bank was not changed; try Export Questions again.");
+        const rows = [];
+        snapshot.forEach(document => { rows.push({ ...document.data(), id: document.id }); });
+        return rows;
+    } catch (error) { throw bankError(error, "export questions"); }
+}
+
 /** This client uses a transaction-protected ID for category/type/canonical-answer uniqueness. */
 export async function addQuestionToFirestore(input) {
     let question;

@@ -350,6 +350,7 @@
             <div id="question-stage-card" class="question-stage-card">
                 <div class="question-stage-top">
                     <span id="question-type-tag" class="question-tag">TRIVIA CLUE</span>
+                    <span id="picture-timer-tag" class="picture-timer-tag hidden" aria-hidden="true"></span>
                     <span id="spotlight-tag" class="spotlight-tag hidden"></span>
                     <span id="chaos-event-tag" class="chaos-event-tag hidden"></span>
                     <div id="stage-countdown-badge" class="stage-countdown-badge">5</div>
@@ -370,8 +371,8 @@
                     </div>
                     <div class="answer-input-row">
                         <input type="text" id="answer-input" class="answer-input"
-                            placeholder="Type your answer and press Enter..." required>
-                        <button type="submit" id="btn-submit-answer" class="btn btn-primary btn-submit-answer">
+                            placeholder="Type your answer and press Enter..." required disabled>
+                        <button type="submit" id="btn-submit-answer" class="btn btn-primary btn-submit-answer" disabled>
                             <span>LOCK ANSWER</span>
                         </button>
                     </div>

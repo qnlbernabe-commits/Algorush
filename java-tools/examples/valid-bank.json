@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "source": "Demonstration data, not a live Firebase export",
+  "questions": [
+    {"id":"demo-tech","category":"Tech & Computer","type":"text","clue":"A step-by-step procedure for solving a problem.","answer":"Algorithm","acceptedAnswers":["Procedure"]},
+    {"id":"demo-science","category":"Science","type":"text","clue":"The force that attracts objects with mass toward one another.","answer":"Gravity"},
+    {"id":"demo-animals","category":"Animals","type":"text","clue":"An eight-armed marine animal with a soft body.","answer":"Octopus"},
+    {"id":"demo-movies","category":"Movies & TV","type":"text","clue":"The green ogre whose best friend is Donkey.","answer":"Shrek"},
+    {"id":"demo-sports","category":"Sports","type":"text","clue":"The sport played with a racket, a shuttlecock, and a net.","answer":"Badminton"},
+    {"id":"demo-food","category":"Food & Drinks","type":"text","clue":"The sweet substance made by honeybees.","answer":"Honey"},
+    {"id":"demo-geography","category":"Geography","type":"text","clue":"The capital city of Japan.","answer":"Tokyo"},
+    {"id":"demo-general","category":"General Knowledge","type":"text","clue":"How many sides does a hexagon have?","answer":"Six","acceptedAnswers":["6"]}
+  ]
+}
